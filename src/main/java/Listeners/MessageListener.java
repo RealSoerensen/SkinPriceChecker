@@ -19,9 +19,8 @@ import java.util.concurrent.TimeUnit;
 
 public class MessageListener extends ListenerAdapter {
 
-    private final String TARGET_CHANNEL_NAME = Constants.DISCORD_CHANNEL_NAME;
-    private ListingService listingService;
     final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private ListingService listingService;
 
     @Override
     public void onReady(@NotNull ReadyEvent event) {
@@ -41,13 +40,8 @@ public class MessageListener extends ListenerAdapter {
 
     private void startScheduler(ReadyEvent event) {
         Runnable task = () -> {
-            sendMessageToChannels(event, "Scanning for best deals...");
             List<Item> items = getBestDeals(listingService);
-            if (items == null) {
-                sendMessageToChannels(event, "Error retrieving deals");
-            } else if (items.size() == 0) {
-                sendMessageToChannels(event, "No deals found");
-            } else {
+            if (items != null && items.size() > 0) {
                 sendItemsToChannels(event, items);
             }
         };
@@ -59,23 +53,18 @@ public class MessageListener extends ListenerAdapter {
     }
 
     private List<Item> getBestDeals(ListingService listingService) {
-        return listingService.getBestDeals();
+        return listingService.getDeals();
     }
 
     private void sendItemsToChannels(ReadyEvent event, List<Item> items) {
         for (Guild guild : event.getJDA().getGuilds()) {
+            String TARGET_CHANNEL_NAME = Constants.DISCORD_CHANNEL_NAME;
             guild.getTextChannelsByName(TARGET_CHANNEL_NAME, true).forEach(channel -> {
                 for (Item item : items) {
                     Role role = guild.getRolesByName(Constants.DISCORD_ROLE_NAME, true).get(0);
                     channel.sendMessage(role.getAsMention() + "\n" + item.toString()).queue();
                 }
             });
-        }
-    }
-
-    private void sendMessageToChannels(ReadyEvent event, String message) {
-        for (Guild guild : event.getJDA().getGuilds()) {
-            guild.getTextChannelsByName(TARGET_CHANNEL_NAME, true).forEach(channel -> channel.sendMessage(message).queue());
         }
     }
 }

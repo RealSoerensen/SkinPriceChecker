@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class JoinListener extends ListenerAdapter {
     Guild guild;
+
     @Override
     public void onGuildJoin(@NotNull GuildJoinEvent event) {
         super.onGuildJoin(event);
@@ -22,14 +23,14 @@ public class JoinListener extends ListenerAdapter {
     }
 
     private void createRole() {
-        if(guild.getRolesByName(Constants.DISCORD_ROLE_NAME, true).size() == 0){
+        if (guild.getRolesByName(Constants.DISCORD_ROLE_NAME, true).size() == 0) {
             guild.createRole().setName(Constants.DISCORD_ROLE_NAME).queue();
         }
     }
 
     private void createChannel() {
         String channelName = Constants.DISCORD_CHANNEL_NAME;
-        if(guild.getTextChannelsByName(channelName, true).size() == 0){
+        if (guild.getTextChannelsByName(channelName, true).size() == 0) {
             guild.createTextChannel(channelName).queue();
         }
     }
@@ -38,7 +39,7 @@ public class JoinListener extends ListenerAdapter {
         TextChannel channel = guild.getTextChannelsByName(Constants.DISCORD_CHANNEL_NAME, true).get(0);
         MessageCreateAction messageCreateAction = channel.sendMessage("""
                 Hello! I am SkinPriceChecker, a bot that checks the prices of CS:GO skins on CSFloat and Buff163.
-                I will post the best deals I find every minute.
+                I will post the best deals I find every 5 minute.
                 To get notified when I post a deal, react to this message with a thumbs up.
                 If you would like to add me to your server, click here: https://discord.com/oauth2/authorize?client_id=1141585102619545690&permissions=268437584&scope=bot
                 """

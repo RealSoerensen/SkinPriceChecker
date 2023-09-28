@@ -1,0 +1,5 @@
+runtime: java
+env: flex
+
+runtime_config:
+  runtime_version: "17"

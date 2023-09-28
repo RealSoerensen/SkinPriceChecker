@@ -26,7 +26,7 @@ public class Item {
 
     private double calculatePriceDifference() {
         double result;
-        if(csfloatPrice > buffPrice) {
+        if (csfloatPrice > buffPrice) {
             result = csfloatPrice - buffPrice;
         } else {
             result = buffPrice - csfloatPrice;

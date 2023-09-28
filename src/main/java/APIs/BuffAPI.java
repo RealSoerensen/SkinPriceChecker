@@ -22,25 +22,16 @@ public class BuffAPI {
         String id = getBuffId(itemName);
 
         if (id == null) {
-            return 0;
+            throw new RuntimeException("Buff ID not found");
         }
 
         String url = BUFF_API_URL + id;
-        JSONObject item;
-        try {
-            item = fetchItemFromBuffAPI(url);
-        } catch (RuntimeException e) {
-            return 0;
-        }
+        JSONObject item = fetchItemFromBuffAPI(url);
 
-        if (item != null) {
-            double price = item.getDouble("price");
-            double newPrice = currencyConverter(price);
-            String newPriceString = String.format("%.2f", newPrice).replace(",", ".");
-            return Double.parseDouble(newPriceString);
-        }
-
-        return 0;
+        double price = item.getDouble("price");
+        double newPrice = currencyConverter(price);
+        String newPriceString = String.format("%.2f", newPrice).replace(",", ".");
+        return Double.parseDouble(newPriceString);
     }
 
     public String getBuffId(String itemName) throws IOException {
@@ -66,13 +57,10 @@ public class BuffAPI {
     private double currencyConverter(double value) throws IOException, InterruptedException {
         JSONObject usdCnyExchangeRates = fetchExchangeRates();
 
-        if (usdCnyExchangeRates != null) {
-            JSONObject usdCnyRates = usdCnyExchangeRates.getJSONObject("rates");
-            JSONObject usdCnyRate = usdCnyRates.getJSONObject(USD_CNY);
-            double usdCnyRateDouble = usdCnyRate.getDouble("rate");
-            return value / usdCnyRateDouble;
-        }
-        return 0;
+        JSONObject usdCnyRates = usdCnyExchangeRates.getJSONObject("rates");
+        JSONObject usdCnyRate = usdCnyRates.getJSONObject(USD_CNY);
+        double usdCnyRateDouble = usdCnyRate.getDouble("rate");
+        return value / usdCnyRateDouble;
     }
 
     private JSONObject fetchItemFromBuffAPI(String url) throws IOException, InterruptedException {
@@ -85,20 +73,16 @@ public class BuffAPI {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                try {
-                    JSONObject jsonObject = new JSONObject(response.body());
-                    JSONObject data = jsonObject.getJSONObject("data");
-                    JSONArray items = data.getJSONArray("items");
-                    return getFirstItem(items);
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
+                JSONObject jsonObject = new JSONObject(response.body());
+                JSONObject data = jsonObject.getJSONObject("data");
+                JSONArray items = data.getJSONArray("items");
+                return getFirstItem(items);
             }
 
-            Thread.sleep(1000);
+            Thread.sleep(5000);
         }
 
-        return null;
+        throw new RuntimeException("Error fetching item from Buff API");
     }
 
     private JSONObject fetchExchangeRates() throws IOException, InterruptedException {
@@ -115,11 +99,13 @@ public class BuffAPI {
 
             Thread.sleep(1000);
         }
-
-        return null;
+        throw new RuntimeException("Error fetching exchange rates");
     }
 
     private JSONObject getFirstItem(JSONArray items) {
+        if (items.length() == 0) {
+            return null;
+        }
         try {
             return items.getJSONObject(0);
         } catch (Exception e) {

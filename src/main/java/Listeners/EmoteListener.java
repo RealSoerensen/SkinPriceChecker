@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public class EmoteListener extends ListenerAdapter {
+    private static EmoteListener instance;
     // Map to store guild IDs and their corresponding initial message IDs
     private final Map<String, String> initialMessageMap;
-    private static EmoteListener instance;
 
     private EmoteListener() {
         initialMessageMap = new HashMap<>();

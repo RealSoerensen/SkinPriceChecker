@@ -20,12 +20,15 @@ import java.net.http.HttpResponse;
 
 public class FloatAPI {
 
-    private final String apiKey;
     private static final int MAX_RETRIES = 10;
+    private final String apiKey;
+    private final int MAX_PRICE = 50000000;
+    private final int MIN_PRICE = 1000;
+    private final String BASE_URL = "https://csfloat.com/api/v1/listings";
 
     public FloatAPI() throws ParserConfigurationException, IOException, SAXException {
         apiKey = loadCsgoFloatApiToken();
-        if(apiKey == null) {
+        if (apiKey == null) {
             throw new RuntimeException("CSGOFloat API key not found");
         }
     }
@@ -54,13 +57,22 @@ public class FloatAPI {
     }
 
     public JSONArray getBestDeals() throws IOException, InterruptedException {
+        String baseUrl = BASE_URL + "?min_price=" + MIN_PRICE + "&max_price=" + MAX_PRICE + "&type=buy_now";
+        return postRequest(baseUrl);
+    }
+
+    public JSONArray getRecentDeals() throws IOException, InterruptedException {
+        String baseUrl = BASE_URL + "?min_price=" + MIN_PRICE + "&max_price=" + MAX_PRICE + "&type=buy_now&sort=most_recent";
+        return postRequest(baseUrl);
+    }
+
+    private JSONArray postRequest(String url) throws IOException, InterruptedException {
         JSONArray listings = null;
-        int MAX_PRICE = 50000000;
-        int MIN_PRICE = 1000;
-        String baseUrl = "https://csfloat.com/api/v1/listings?min_price=" + MIN_PRICE +"&max_price=" + MAX_PRICE +"&type=buy_now";
+
+
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl))
+                .uri(URI.create(url))
                 .headers("Authorization", apiKey)
                 .build();
 

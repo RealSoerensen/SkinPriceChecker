@@ -17,9 +17,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class ListingService {
+    private static ListingService instance;
     private final FloatAPI floatAPI;
     private final BuffAPI buffScraper;
-    private static ListingService instance;
     private final List<Item> oldItems = new ArrayList<>();
 
     private ListingService() throws ParserConfigurationException, IOException, SAXException {
@@ -28,27 +28,25 @@ public class ListingService {
     }
 
     public static ListingService getInstance() throws ParserConfigurationException, IOException, SAXException {
-        if(instance == null) {
+        if (instance == null) {
             instance = new ListingService();
         }
         return instance;
     }
 
-    public List<Item> getBestDeals() {
+    public List<Item> getDeals() {
         JSONArray listings;
         try {
             listings = floatAPI.getBestDeals();
+            listings.putAll(floatAPI.getRecentDeals());
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-        if(listings == null) {
-            return null;
-        }
 
-        List<Item> items = null;
+        List<Item> items;
         items = getItemsFromListings(listings);
 
-        if(items == null || items.size() == 0) {
+        if (items.size() == 0) {
             return items;
         }
 
@@ -146,19 +144,23 @@ public class ListingService {
             buffPrice = buffScraper.getBuffPrice(itemName);
         } catch (IOException | InterruptedException | RuntimeException e) {
             System.out.println("Error getting buff price for " + itemName);
-            e.printStackTrace();
-            return null; // Return null if there's an error
+            throw new RuntimeException(e);
         }
 
+
         if (floatPrice == 0 || buffPrice == 0) {
+            System.out.println("Item name: " + itemName);
+            System.out.println("Float price: " + floatPrice);
+            System.out.println("Buff price: " + buffPrice);
             System.out.println("There was an error getting the price for " + itemName);
+            System.out.println("Listing: " + listing);
             return null; // Return null if there's an error
         }
 
         // Calculate percentages
         double percentageDifference = ((buffPrice - floatPrice) / floatPrice) * 100.0;
 
-        if (percentageDifference >= 1.0) {
+        if (percentageDifference <= 5.0 && buffPrice >= floatPrice) {
             String id = listing.getString("id");
             String floatUrl = "https://csfloat.com/item/" + id;
             String buffUrl = "https://buff.163.com/goods/" + buffScraper.getBuffId(itemName);
